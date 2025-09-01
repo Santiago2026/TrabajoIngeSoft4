@@ -135,18 +135,24 @@ public class PrinterI implements Demo.Printer {
     private String scanOpenPorts(String ip) {
         StringBuilder result = new StringBuilder();
         try {
-            for (int port = 1; port <= 5000; port++) {
-                try (Socket socket = new Socket()) {
-                    socket.connect(new InetSocketAddress(ip, port), 100);
-                    result.append("Puerto abierto: ").append(port).append("\n");
-                } catch (IOException ignored) {
-                    
-                }
+            // Comando nmap: -p- escanea todos los puertos, --open muestra solo los abiertos
+            String cmd = "nmap " + ip;
+            Process process = Runtime.getRuntime().exec(cmd);
+
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream())
+            );
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.append(line).append("\n");
             }
+
+            process.waitFor(); // esperar a que termine el proceso
         } catch (Exception e) {
-            return "Error escaneando puertos: " + e.getMessage();
+            return "Error ejecutando nmap: " + e.getMessage();
         }
-        return result.length() == 0 ? "No se encontraron puertos abiertos." : result.toString();
+        return result.toString();
     }
 
     private String runCommand(String cmd) throws IOException {
